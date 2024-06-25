@@ -22,7 +22,7 @@ RUN ./certificates.sh
 COPY kube-configurations.sh .
 RUN ./kube-configurations.sh
 
-COPY encryption-configuration.sh encryption-config.yaml .
+COPY encryption-configuration.sh .
 RUN ./encryption-configuration.sh
 
 COPY hosts.sh machines.txt .
