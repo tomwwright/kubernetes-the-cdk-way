@@ -9,8 +9,8 @@ apt install unzip
 
 # install aws cli
 
-curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
+wget https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip
+unzip awscli-exe-linux-aarch64.zip
 ./aws/install
 aws --version
 
