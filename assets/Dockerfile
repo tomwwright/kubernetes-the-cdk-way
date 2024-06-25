@@ -14,6 +14,7 @@ WORKDIR /build
 RUN mkdir -p out out/server out/node-0 out/node-1
 
 RUN git clone --depth 1 https://github.com/kelseyhightower/kubernetes-the-hard-way.git
+RUN ./configurations.sh
 
 COPY certificates.sh .
 RUN ./certificates.sh
