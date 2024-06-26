@@ -31,17 +31,13 @@ new BucketDeployment(stack, 'DeployAssets', {
 
 // set up networking
 
-const machines = fs.readFileSync(`${__dirname}/../assets/machines.txt`, "utf8")
-const ipAddressFor = (machine: string) => {
-  const matchingLine = machines
+const machinesTxt = fs.readFileSync(`${__dirname}/../assets/machines.txt`, "utf8")
+const ipAddressFor = (machine: string) => machinesTxt
   .split("\n")
   .find(m => m.trim().includes(machine))
+  ?.split(" ")
+  [0]
 
-  if(!matchingLine)
-    throw new Error("Machine not listed in machines.txt")
-
-  return matchingLine.split(" ")[0]
-}
 
 const vpc = new Vpc(stack, 'Vpc', {
   cidr: "10.0.0.0/27",
@@ -50,8 +46,7 @@ const vpc = new Vpc(stack, 'Vpc', {
 
 // configure server instance
 
-const serverUserData = UserData.custom(
-  `
+const serverUserData = UserData.custom(`
   #!/bin/bash
 
   set -xe
