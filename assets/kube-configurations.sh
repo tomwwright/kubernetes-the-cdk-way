@@ -102,7 +102,7 @@ kubectl config use-context default \
 # admin user configuration file
 
 kubectl config set-cluster kubernetes-the-hard-way \
-    --certificate-authority=ca.crt \
+--certificate-authority=ca.crt \
 --embed-certs=true \
 --server=https://127.0.0.1:6443 \
 --kubeconfig=admin.kubeconfig
