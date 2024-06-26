@@ -32,6 +32,16 @@ new BucketDeployment(stack, 'DeployAssets', {
 // set up networking
 
 const machinesTxt = fs.readFileSync(`${__dirname}/../assets/machines.txt`, "utf8")
+
+const ipRoutes = machinesTxt.split("\n").map(m => {
+  const entry = m.split(" ")
+  return {
+    machine: entry[2],
+    ip: entry[0],
+    cidr: entry[3]
+  }
+}).filter(r => r.cidr !== undefined && r.cidr !== "")
+
 const ipAddressFor = (machine: string) => machinesTxt
   .split("\n")
   .find(m => m.trim().includes(machine))
@@ -56,6 +66,13 @@ const serverUserData = UserData.custom(`
 
   ${fs.readFileSync(`${__dirname}/../assets/userdata/common.sh`, "utf8")}
   ${fs.readFileSync(`${__dirname}/../assets/userdata/server.sh`, "utf8")}
+  
+  # configure routes to other nodes
+
+  ${ipRoutes.filter(r => r.machine !== "server")
+    .map(r => `ip route add ${r.cidr} via ${r.ip}`)
+    .join("\n")
+  }
   `
 )
 
@@ -82,7 +99,14 @@ for(const host of ["node-0", "node-1"]) {
 
     ${fs.readFileSync(`${__dirname}/../assets/userdata/common.sh`, "utf8")}
     ${fs.readFileSync(`${__dirname}/../assets/userdata/worker.sh`, "utf8")}
-  `
+    
+    # configure routes to other nodes
+
+    ${ipRoutes.filter(r => r.machine !== host)
+      .map(r => `ip route add ${r.cidr} via ${r.ip}`)
+      .join("\n")
+    }
+    `
   )
   
   const workerInstance = new Instance(stack, `${host}Instance`, {
