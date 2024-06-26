@@ -14,6 +14,7 @@ WORKDIR /build
 RUN mkdir -p out out/server out/node-0 out/node-1
 
 RUN git clone --depth 1 https://github.com/kelseyhightower/kubernetes-the-hard-way.git
+COPY configurations.sh machines.txt .
 RUN ./configurations.sh
 
 COPY certificates.sh .
@@ -25,7 +26,7 @@ RUN ./kube-configurations.sh
 COPY encryption-configuration.sh .
 RUN ./encryption-configuration.sh
 
-COPY hosts.sh machines.txt .
+COPY hosts.sh .
 RUN ./hosts.sh
 
 RUN chmod -R 0777 /build/out 

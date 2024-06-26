@@ -68,3 +68,32 @@ const serverInstance = new Instance(stack, "ServerInstance", {
 })
 serverInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
 bucket.grantRead(serverInstance)
+
+// configure worker instances
+
+for(const host of ["node-0", "node-1"]) {
+  const workerUserData = UserData.custom(`
+    #!/bin/bash
+
+    set -xe
+
+    bucket=${bucket.bucketName}
+    host=${host}
+
+    ${fs.readFileSync(`${__dirname}/../assets/userdata/common.sh`, "utf8")}
+    ${fs.readFileSync(`${__dirname}/../assets/userdata/worker.sh`, "utf8")}
+  `
+  )
+  
+  const workerInstance = new Instance(stack, `${host}Instance`, {
+    vpc,
+    machineImage: MachineImage.fromSsmParameter("/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id"),
+    instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.SMALL),
+    userData: workerUserData,
+    privateIpAddress: ipAddressFor(host),
+  })
+  workerInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
+  bucket.grantRead(workerInstance)
+
+}
+
