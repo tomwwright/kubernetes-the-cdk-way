@@ -42,6 +42,10 @@ mv containerd/bin/* /bin/
 mkdir -p /var/lib/kubelet
 mv kubelet-config.yaml /var/lib/kubelet/
 mv kubelet.service /etc/systemd/system/
+mv ca.crt /var/lib/kubelet/
+mv $host.crt /var/lib/kubelet/kubelet.crt
+mv $host.key /var/lib/kubelet/kubelet.key
+
 
 wget -q https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kubelet
 chmod +x kubelet
