@@ -1,6 +1,6 @@
 # Kubernetes the CDK Way
 
-Working through [Kubernetes the Hard Way] https://github.com/kelseyhightower/kubernetes-the-hard-way with a twist.
+Working through [Kubernetes the Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) with a twist.
 
 ![https://frinkiac.com/caption/S07E09/656355](./doc/irony.jpg)
 
