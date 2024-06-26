@@ -56,7 +56,9 @@ const vpc = new Vpc(stack, 'Vpc', {
 
 // configure server instance
 
-const serverUserData = UserData.custom(`
+const trimLeadingWhitespace = (str: string) => str.replace(/\n[ \t] +/g, "\n")
+
+const serverUserData = UserData.custom(trimLeadingWhitespace(`
   #!/bin/bash
 
   set -xe
@@ -74,7 +76,7 @@ const serverUserData = UserData.custom(`
     .join("\n")
   }
   `
-)
+))
 
 const serverInstance = new Instance(stack, "ServerInstance", {
   vpc,
@@ -89,7 +91,7 @@ bucket.grantRead(serverInstance)
 // configure worker instances
 
 for(const host of ["node-0", "node-1"]) {
-  const workerUserData = UserData.custom(`
+  const workerUserData = UserData.custom(trimLeadingWhitespace(`
     #!/bin/bash
 
     set -xe
@@ -107,7 +109,7 @@ for(const host of ["node-0", "node-1"]) {
       .join("\n")
     }
     `
-  )
+  ))
   
   const workerInstance = new Instance(stack, `${host}Instance`, {
     vpc,
