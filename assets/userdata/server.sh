@@ -1,6 +1,6 @@
 # install and bootstrap etcd
 
-wget https://github.com/etcd-io/etcd/releases/download/v3.4.27/etcd-v3.4.27-linux-arm64.tar.gz
+wget -q https://github.com/etcd-io/etcd/releases/download/v3.4.27/etcd-v3.4.27-linux-arm64.tar.gz
 tar -xvf etcd-v3.4.27-linux-arm64.tar.gz
 mv etcd-v3.4.27-linux-arm64/etcd* /usr/local/bin/
 
@@ -17,7 +17,7 @@ etcdctl member list
 
 # install and bootstrap kubernetes control plane
 
-wget https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kubectl \
+wget -q https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kubectl \
  https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kube-apiserver \
  https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kube-controller-manager \
  https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kube-scheduler

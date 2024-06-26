@@ -4,7 +4,7 @@ set -e
 
 # download and install kubectl
 
-wget https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kubectl
+wget -q https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kubectl
 chmod +x kubectl
 cp kubectl /usr/local/bin/
 kubectl version --client
