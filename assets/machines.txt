@@ -1,3 +1,4 @@
 10.0.0.20 server.kubernetes.local server  
 10.0.0.21 node-0.kubernetes.local node-0 10.200.0.0/24
 10.0.0.22 node-1.kubernetes.local node-1 10.200.1.0/24
+10.0.0.23 jumpbox.kubernetes.local jumpbox  
