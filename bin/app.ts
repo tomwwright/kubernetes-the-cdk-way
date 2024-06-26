@@ -51,7 +51,17 @@ const vpc = new Vpc(stack, 'Vpc', {
 // configure server instance
 
 const serverUserData = UserData.custom(
-  fs.readFileSync(`${__dirname}/../assets/userdata/server.sh`, "utf8"),
+  `
+  #!/bin/bash
+
+  set -xe
+
+  bucket=${bucket.bucketName}
+  host=server
+
+  ${fs.readFileSync(`${__dirname}/../assets/userdata/common.sh`, "utf8")}
+  ${fs.readFileSync(`${__dirname}/../assets/userdata/server.sh`, "utf8")}
+  `
 )
 
 const serverInstance = new Instance(stack, "ServerInstance", {

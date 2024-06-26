@@ -1,32 +1,3 @@
-#!/bin/bash
-
-set -xe
-
-# install dependencies
-
-apt update
-apt install unzip
-
-# install aws cli
-
-wget https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip
-unzip awscli-exe-linux-aarch64.zip
-./aws/install
-aws --version
-
-# download assets
-
-bucket=$1
-mkdir -p assets
-aws s3 cp --recursive s3://$bucket/server assets
-cd assets
-
-# set up hostname and hosts file
-
-hostnamectl hostname server
-sed -i 's/^127.0.1.1.*/127.0.1.1\tserver.kubernetes.local server/' /etc/hosts
-cat hosts >> /etc/hosts
-
 # install and bootstrap etcd
 
 wget https://github.com/etcd-io/etcd/releases/download/v3.4.27/etcd-v3.4.27-linux-arm64.tar.gz
