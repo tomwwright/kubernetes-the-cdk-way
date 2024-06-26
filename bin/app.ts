@@ -6,7 +6,7 @@ import * as fs from "fs";
 import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { DockerImage } from 'aws-cdk-lib';
-import { Instance, InstanceClass, InstanceSize, InstanceType, IpAddresses, MachineImage, SubnetType, UserData, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { Instance, InstanceClass, InstanceSize, InstanceType, IpAddresses, MachineImage, Port, SecurityGroup, SubnetType, UserData, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import { ManagedPolicy } from 'aws-cdk-lib/aws-iam';
 
@@ -54,6 +54,11 @@ const vpc = new Vpc(stack, 'Vpc', {
   maxAzs: 1,
 })
 
+const securityGroup = new SecurityGroup(stack, "SecurityGroup", {
+  vpc
+})
+securityGroup.connections.allowInternally(Port.allTraffic())
+
 // configure server instance
 
 const trimLeadingWhitespace = (str: string) => str.replace(/\n[ \t] +/g, "\n").trim()
@@ -84,6 +89,7 @@ const serverInstance = new Instance(stack, "ServerInstance", {
   instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.SMALL),
   userData: serverUserData,
   privateIpAddress: ipAddressFor("server"),
+  securityGroup
 })
 serverInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
 bucket.grantRead(serverInstance)
@@ -118,6 +124,7 @@ for(const host of ["node-0", "node-1"]) {
     instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.SMALL),
     userData: workerUserData,
     privateIpAddress: ipAddressFor(host),
+    securityGroup
   })
   workerInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
   bucket.grantRead(workerInstance)
@@ -125,6 +132,5 @@ for(const host of ["node-0", "node-1"]) {
     assetsDeployment,
     serverInstance
   )
-
 }
 
