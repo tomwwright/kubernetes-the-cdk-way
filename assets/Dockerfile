@@ -1,4 +1,5 @@
 FROM alpine
+WORKDIR /build
 
 RUN apk add \
 git \
@@ -6,28 +7,14 @@ openssl \
 bash \
 envsubst
 
-# RUN adduser -D build
-# USER build
-# WORKDIR /home/build
-
-WORKDIR /build
-RUN mkdir -p out out/server out/node-0 out/node-1
+RUN mkdir -p out out/server out/node-0 out/node-1 out/jumpbox
 
 RUN git clone --depth 1 https://github.com/kelseyhightower/kubernetes-the-hard-way.git
-COPY configurations.sh machines.txt .
-RUN ./configurations.sh
 
-COPY certificates.sh .
-RUN ./certificates.sh
+COPY prepare-assets.sh machines.txt .
+RUN ./prepare-assets.sh
 
-COPY kube-configurations.sh .
-RUN ./kube-configurations.sh
-
-COPY encryption-configuration.sh .
-RUN ./encryption-configuration.sh
-
-COPY hosts.sh .
-RUN ./hosts.sh
+COPY smoke-test.sh out/jumpbox
 
 RUN chmod -R 0777 /build/out 
 
