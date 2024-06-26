@@ -45,7 +45,7 @@ mv kubelet.service /etc/systemd/system/
 mv ca.crt /var/lib/kubelet/
 mv $host.crt /var/lib/kubelet/kubelet.crt
 mv $host.key /var/lib/kubelet/kubelet.key
-
+mv $host.kubeconfig /var/lib/kubelet/kubeconfig
 
 wget -q https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kubelet
 chmod +x kubelet
@@ -56,6 +56,7 @@ mv kubelet /usr/local/bin/
 mkdir -p /var/lib/kube-proxy
 mv kube-proxy-config.yaml /var/lib/kube-proxy/
 mv kube-proxy.service /etc/systemd/system/
+mv kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
 
 wget -q https://storage.googleapis.com/kubernetes-release/release/v1.28.3/bin/linux/arm64/kube-proxy
 chmod +x kube-proxy
