@@ -56,7 +56,7 @@ const vpc = new Vpc(stack, 'Vpc', {
 
 // configure server instance
 
-const trimLeadingWhitespace = (str: string) => str.replace(/\n[ \t] +/g, "\n")
+const trimLeadingWhitespace = (str: string) => str.replace(/\n[ \t] +/g, "\n").trim()
 
 const serverUserData = UserData.custom(trimLeadingWhitespace(`
   #!/bin/bash
