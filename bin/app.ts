@@ -6,7 +6,7 @@ import * as fs from "fs";
 import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { DockerImage } from 'aws-cdk-lib';
-import { Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, SubnetType, UserData, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { Instance, InstanceClass, InstanceSize, InstanceType, IpAddresses, MachineImage, SubnetType, UserData, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import { ManagedPolicy } from 'aws-cdk-lib/aws-iam';
 
@@ -50,7 +50,7 @@ const ipAddressFor = (machine: string) => machinesTxt
 
 
 const vpc = new Vpc(stack, 'Vpc', {
-  cidr: "10.0.0.0/27",
+  ipAddresses: IpAddresses.cidr("10.0.0.0/27"),
   maxAzs: 1,
 })
 
