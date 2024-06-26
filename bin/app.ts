@@ -17,7 +17,7 @@ const stack = new cdk.Stack(app, 'kubernetes-cdk-way');
 
 const bucket = new Bucket(stack, 'AssetsBucket')
 
-new BucketDeployment(stack, 'DeployAssets', {
+const assetsDeployment = new BucketDeployment(stack, 'DeployAssets', {
   sources: [
     Source.asset(path.join(__dirname, "..", "assets"), {
       bundling: {
@@ -87,6 +87,7 @@ const serverInstance = new Instance(stack, "ServerInstance", {
 })
 serverInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
 bucket.grantRead(serverInstance)
+serverInstance.node.addDependency(assetsDeployment)
 
 // configure worker instances
 
@@ -120,6 +121,10 @@ for(const host of ["node-0", "node-1"]) {
   })
   workerInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
   bucket.grantRead(workerInstance)
+  workerInstance.node.addDependency(
+    assetsDeployment,
+    serverInstance
+  )
 
 }
 
