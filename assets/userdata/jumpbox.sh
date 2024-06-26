@@ -34,7 +34,7 @@ kubectl config use-context kubernetes-the-hard-way
 
 mkdir -p /home/ssm-user/.kube
 cp .kube/config /home/ssm-user/.kube
-chown -R ssm-user:ssm-user /home/ssm-user
+chmod 0777 /home/ssm-user/.kube/config
 
 # wait for cluster then test configuration
 
