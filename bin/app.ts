@@ -65,7 +65,6 @@ const trimLeadingWhitespace = (str: string) => str.replace(/\n[ \t] +/g, "\n").t
 
 const serverUserData = UserData.custom(trimLeadingWhitespace(`
   #!/bin/bash
-
   set -xe
 
   bucket=${bucket.bucketName}
@@ -100,7 +99,6 @@ serverInstance.node.addDependency(assetsDeployment)
 for(const host of ["node-0", "node-1"]) {
   const workerUserData = UserData.custom(trimLeadingWhitespace(`
     #!/bin/bash
-
     set -xe
 
     bucket=${bucket.bucketName}
@@ -134,3 +132,31 @@ for(const host of ["node-0", "node-1"]) {
   )
 }
 
+// configure jumpbox instance
+
+const jumpboxUserData = UserData.custom(trimLeadingWhitespace(`
+  #!/bin/bash
+  set -xe
+
+  bucket=${bucket.bucketName}
+  host=jumpbox
+
+  ${fs.readFileSync(`${__dirname}/../assets/userdata/common.sh`, "utf8")}
+  ${fs.readFileSync(`${__dirname}/../assets/userdata/jumpbox.sh`, "utf8")}
+  `
+))
+
+const jumpboxInstance = new Instance(stack, `JumpboxInstance`, {
+  vpc,
+  machineImage: MachineImage.fromSsmParameter("/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id"),
+  instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MICRO),
+  userData: jumpboxUserData,
+  privateIpAddress: ipAddressFor("jumpbox"),
+  securityGroup
+})
+jumpboxInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
+bucket.grantRead(jumpboxInstance)
+jumpboxInstance.node.addDependency(
+  assetsDeployment,
+  serverInstance
+)

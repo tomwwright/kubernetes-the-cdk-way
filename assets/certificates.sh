@@ -37,3 +37,4 @@ cp ca.key ca.crt \
   kube-api-server.key kube-api-server.crt \
   service-accounts.key service-accounts.crt \
   out/server
+cp ca.crt admin.crt admin.key out/jumpbox

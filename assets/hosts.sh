@@ -10,3 +10,4 @@ done < machines.txt
 cp hosts out/server
 cp hosts out/node-0
 cp hosts out/node-1
+cp hosts out/jumpbox
