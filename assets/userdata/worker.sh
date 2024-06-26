@@ -59,6 +59,8 @@ mv kube-proxy /usr/local/bin/
 
 # configure worker services
 
+sleep 10 # give control server time to complete
+
 systemctl daemon-reload
 systemctl enable containerd kubelet kube-proxy
 systemctl start containerd kubelet kube-proxy

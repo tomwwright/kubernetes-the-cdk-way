@@ -44,6 +44,8 @@ systemctl daemon-reload
 systemctl enable kube-apiserver kube-controller-manager kube-scheduler
 systemctl start kube-apiserver kube-controller-manager kube-scheduler
 
+sleep 5
+
 kubectl cluster-info --kubeconfig admin.kubeconfig
 
 # configure kubelet authorization
