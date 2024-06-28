@@ -45,8 +45,8 @@ securityGroup.connections.allowInternally(Port.allTraffic())
 
 // prepare for creating our instances
 
-const machinesTxt = fs.readFileSync(`${assetsPath}/machines.txt`, "utf8")
-
+const readAsset = (filename: string) => fs.readFileSync(`${assetsPath}/${filename}`, "utf8")
+const machinesTxt = readAsset("machines.txt")
 const hosts = machinesTxt.split("\n").map(m => {
   const entry = m.split(" ")
   return {
@@ -87,8 +87,8 @@ const serverUserData = UserData.custom(trimLeadingWhitespace(`
   bucket=${bucket.bucketName}
   host=server
 
-  ${fs.readFileSync(`${__dirname}/../assets/userdata/common.sh`, "utf8")}
-  ${fs.readFileSync(`${__dirname}/../assets/userdata/server.sh`, "utf8")}
+  ${readAsset(`userdata/common.sh`)}
+  ${readAsset(`userdata/server.sh`)}
   
   # configure routes to other nodes
 
@@ -116,8 +116,8 @@ for(const host of ["node-0", "node-1"]) {
     bucket=${bucket.bucketName}
     host=${host}
 
-    ${fs.readFileSync(`${__dirname}/../assets/userdata/common.sh`, "utf8")}
-    ${fs.readFileSync(`${__dirname}/../assets/userdata/worker.sh`, "utf8")}
+    ${readAsset(`userdata/common.sh`)}
+    ${readAsset(`userdata/worker.sh`)}
     
     # configure routes to other nodes
 
@@ -148,8 +148,8 @@ const jumpboxUserData = UserData.custom(trimLeadingWhitespace(`
   bucket=${bucket.bucketName}
   host=jumpbox
 
-  ${fs.readFileSync(`${__dirname}/../assets/userdata/common.sh`, "utf8")}
-  ${fs.readFileSync(`${__dirname}/../assets/userdata/jumpbox.sh`, "utf8")}
+  ${readAsset(`userdata/common.sh`)}
+  ${readAsset(`userdata/jumpbox.sh`)}
   `
 ))
 
