@@ -6,22 +6,24 @@ import * as fs from "fs";
 import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { DockerImage } from 'aws-cdk-lib';
-import { Instance, InstanceClass, InstanceSize, InstanceType, IpAddresses, MachineImage, Port, SecurityGroup, SubnetType, UserData, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { Instance as Ec2Instance, InstanceClass, InstanceSize, InstanceType, IpAddresses, MachineImage, Port, SecurityGroup, SubnetType, UserData, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import { ManagedPolicy } from 'aws-cdk-lib/aws-iam';
+import { Construct } from 'constructs';
 
 const app = new cdk.App();
 const stack = new cdk.Stack(app, 'kubernetes-cdk-way');
 
 // prepare and deploy assets
 
-const bucket = new Bucket(stack, 'AssetsBucket')
+const assetsPath = path.join(__dirname, "..", "assets")
 
+const bucket = new Bucket(stack, 'AssetsBucket')
 const assetsDeployment = new BucketDeployment(stack, 'DeployAssets', {
   sources: [
-    Source.asset(path.join(__dirname, "..", "assets"), {
+    Source.asset(assetsPath, {
       bundling: {
-        image: DockerImage.fromBuild(path.join(__dirname, "..", 'assets')),
+        image: DockerImage.fromBuild(assetsPath),
         platform: Platform.LINUX_ARM64.platform,
       }
     })
@@ -30,24 +32,6 @@ const assetsDeployment = new BucketDeployment(stack, 'DeployAssets', {
 });
 
 // set up networking
-
-const machinesTxt = fs.readFileSync(`${__dirname}/../assets/machines.txt`, "utf8")
-
-const ipRoutes = machinesTxt.split("\n").map(m => {
-  const entry = m.split(" ")
-  return {
-    machine: entry[2],
-    ip: entry[0],
-    cidr: entry[3]
-  }
-}).filter(r => r.cidr !== undefined && r.cidr !== "")
-
-const ipAddressFor = (machine: string) => machinesTxt
-  .split("\n")
-  .find(m => m.trim().includes(machine))
-  ?.split(" ")
-  [0]
-
 
 const vpc = new Vpc(stack, 'Vpc', {
   ipAddresses: IpAddresses.cidr("10.0.0.0/27"),
@@ -59,9 +43,42 @@ const securityGroup = new SecurityGroup(stack, "SecurityGroup", {
 })
 securityGroup.connections.allowInternally(Port.allTraffic())
 
-// configure server instance
+// prepare for creating our instances
+
+const machinesTxt = fs.readFileSync(`${assetsPath}/machines.txt`, "utf8")
+
+const hosts = machinesTxt.split("\n").map(m => {
+  const entry = m.split(" ")
+  return {
+    host: entry[2],
+    ip: entry[0],
+    cidr: entry[3]
+  }
+})
+
+interface InstanceProps {
+  host: string,
+  userData: UserData,
+}
+
+class Instance extends Ec2Instance {
+  constructor(scope: Construct, id: string, props: InstanceProps) {
+    super(scope, id, {
+      vpc,
+      machineImage: MachineImage.fromSsmParameter("/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id"),
+      instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.SMALL),
+      securityGroup,
+      privateIpAddress: hosts.find(h => h.host === "server")?.ip,
+      ...props,
+    })
+    this.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
+    bucket.grantRead(this)
+  }
+}
 
 const trimLeadingWhitespace = (str: string) => str.replace(/\n[ \t] +/g, "\n").trim()
+
+// configure server instance
 
 const serverUserData = UserData.custom(trimLeadingWhitespace(`
   #!/bin/bash
@@ -75,7 +92,8 @@ const serverUserData = UserData.custom(trimLeadingWhitespace(`
   
   # configure routes to other nodes
 
-  ${ipRoutes.filter(r => r.machine !== "server")
+  ${hosts.filter(r => r.host !== "server")
+    .filter(r => r.cidr !== undefined && r.cidr !== "")
     .map(r => `ip route add ${r.cidr} via ${r.ip}`)
     .join("\n")
   }
@@ -83,15 +101,9 @@ const serverUserData = UserData.custom(trimLeadingWhitespace(`
 ))
 
 const serverInstance = new Instance(stack, "ServerInstance", {
-  vpc,
-  machineImage: MachineImage.fromSsmParameter("/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id"),
-  instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.SMALL),
+  host: "server",
   userData: serverUserData,
-  privateIpAddress: ipAddressFor("server"),
-  securityGroup
 })
-serverInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
-bucket.grantRead(serverInstance)
 serverInstance.node.addDependency(assetsDeployment)
 
 // configure worker instances
@@ -109,7 +121,8 @@ for(const host of ["node-0", "node-1"]) {
     
     # configure routes to other nodes
 
-    ${ipRoutes.filter(r => r.machine !== host)
+    ${hosts.filter(r => r.host !== host)
+      .filter(r => r.cidr !== undefined && r.cidr !== "")
       .map(r => `ip route add ${r.cidr} via ${r.ip}`)
       .join("\n")
     }
@@ -117,15 +130,9 @@ for(const host of ["node-0", "node-1"]) {
   ))
   
   const workerInstance = new Instance(stack, `${host}Instance`, {
-    vpc,
-    machineImage: MachineImage.fromSsmParameter("/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id"),
-    instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.SMALL),
+    host,
     userData: workerUserData,
-    privateIpAddress: ipAddressFor(host),
-    securityGroup
   })
-  workerInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
-  bucket.grantRead(workerInstance)
   workerInstance.node.addDependency(
     assetsDeployment,
     serverInstance
@@ -147,15 +154,9 @@ const jumpboxUserData = UserData.custom(trimLeadingWhitespace(`
 ))
 
 const jumpboxInstance = new Instance(stack, `JumpboxInstance`, {
-  vpc,
-  machineImage: MachineImage.fromSsmParameter("/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id"),
-  instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MICRO),
+  host: "jumpbox",
   userData: jumpboxUserData,
-  privateIpAddress: ipAddressFor("jumpbox"),
-  securityGroup
 })
-jumpboxInstance.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"))
-bucket.grantRead(jumpboxInstance)
 jumpboxInstance.node.addDependency(
   assetsDeployment,
   serverInstance
